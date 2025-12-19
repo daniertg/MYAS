@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theoryma MySQL Auto User - Web Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #0f3460;
+            margin-bottom: 30px;
+        }
+        
+        .header pre {
+            font-size: 10px;
+            color: #00d9ff;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            color: #00d9ff;
+            font-size: 24px;
+            margin-top: 10px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: #0f3460;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .tab-btn:hover, .tab-btn.active {
+            background: #00d9ff;
+            color: #1a1a2e;
+        }
+        
+        /* Panels */
+        .panel {
+            display: none;
+            background: rgba(15, 52, 96, 0.5);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .panel h2 {
+            color: #00d9ff;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 10px;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-primary {
+            background: #00d9ff;
+            color: #1a1a2e;
+        }
+        
+        .btn-danger {
+            background: #e94560;
+            color: #fff;
+        }
+        
+        .btn-success {
+            background: #00bf63;
+            color: #fff;
+        }
+        
+        .btn:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        th {
+            background: #0f3460;
+            color: #00d9ff;
+        }
+        
+        tr:hover {
+            background: rgba(0, 217, 255, 0.1);
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: rgba(0, 191, 99, 0.2);
+            border: 1px solid #00bf63;
+            color: #00bf63;
+        }
+        
+        .alert-error {
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid #e94560;
+            color: #e94560;
+        }
+        
+        /* Password hint */
+        .password-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        /* Host info */
+        .host-info {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        /* Actions */
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid #0f3460;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            color: #00d9ff;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00d9ff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header pre {
+                font-size: 6px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <pre>
+  _____ _                                        
+ |_   _| |__   ___  ___  _ __ _   _ _ __ ___   __ _ 
+   | | | '_ \ / _ \/ _ \| '__| | | | '_ ` _ \ / _` |
+   | | | | | |  __/ (_) | |  | |_| | | | | | | (_| |
+   |_| |_| |_|\___|\___/|_|   \__, |_| |_| |_|\__,_|
+                              |___/                 
+            </pre>
+            <h1>MySQL Auto User - Web Manager</h1>
+            <p>By Theoryma Team | Coded by Febrian Dani Ritonga</p>
+        </div>
+        
+        <!-- Alert -->
+        <div id="alert" class="alert"></div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('create-user')">➕ Create User & DB</button>
+            <button class="tab-btn" onclick="showTab('manage-users')">👥 Manage Users</button>
+            <button class="tab-btn" onclick="showTab('manage-databases')">🗄️ Manage Databases</button>
+            <button class="tab-btn" onclick="showTab('privileges')">🔐 Privileges</button>
+        </div>
+        
+        <!-- Create User Panel -->
+        <div id="create-user" class="panel active">
+            <h2>➕ Create User & Database</h2>
+            <form id="createUserForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Database</label>
+                        <input type="text" id="dbName" placeholder="nama_database" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="dbUser" placeholder="username" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Host</label>
+                        <input type="text" id="dbHost" placeholder="localhost" value="localhost">
+                        <p class="host-info">localhost = local | % atau 0 = semua host | IP = specific host</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="dbPass" placeholder="Password" required>
+                        <p class="password-hint">Min 8 karakter, huruf besar, huruf kecil, angka, karakter spesial</p>
+                    </div>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="createDb" checked>
+                    <label for="createDb">Buat database juga</label>
+                </div>
+                <button type="submit" class="btn btn-primary">🚀 Create User & Database</button>
+            </form>
+        </div>
+        
+        <!-- Manage Users Panel -->
+        <div id="manage-users" class="panel">
+            <h2>👥 Manage Users</h2>
+            <button class="btn btn-primary" onclick="loadUsers()">🔄 Refresh Users</button>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Host</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                        <tr><td colspan="3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Manage Databases Panel -->
+        <div id="manage-databases" class="panel">
+            <h2>🗄️ Manage Databases</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nama Database Baru</label>
+                    <input type="text" id="newDbName" placeholder="nama_database_baru">
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-primary" onclick="createDatabase()">➕ Create Database</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="loadDatabases()" style="margin-top: 10px;">🔄 Refresh Databases</button>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Database Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="databasesTable">
+                        <tr><td colspan="2">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Privileges Panel -->
+        <div id="privileges" class="panel">
+            <h2>🔐 Grant/Revoke Privileges</h2>
+            <form id="privilegesForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <select id="privUser">
+                            <option value="">-- Select User --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Database</label>
+                        <select id="privDb">
+                            <option value="">-- Select Database --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Privileges</label>
+                    <select id="privType">
+                        <option value="ALL PRIVILEGES">ALL PRIVILEGES</option>
+                        <option value="SELECT">SELECT (Read Only)</option>
+                        <option value="SELECT, INSERT">SELECT, INSERT (Read & Insert)</option>
+                        <option value="SELECT, INSERT, UPDATE">SELECT, INSERT, UPDATE</option>
+                        <option value="SELECT, INSERT, UPDATE, DELETE">SELECT, INSERT, UPDATE, DELETE</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-success" onclick="grantPrivileges()">✅ Grant Privileges</button>
+                <button type="button" class="btn btn-danger" onclick="revokePrivileges()">❌ Revoke Privileges</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔑 Change Password</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="changePasswordForm">
+                <input type="hidden" id="modalUser">
+                <input type="hidden" id="modalHost">
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="modalPassword" required>
+                    <p class="password-hint">Min 8 karakter, huruf besar, huruf kecil, angka, karakter spesial</p>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Save Password</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- User Grants Modal -->
+    <div id="grantsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 User Grants</h3>
+                <button class="modal-close" onclick="closeGrantsModal()">&times;</button>
+            </div>
+            <div id="grantsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab navigation
+        function showTab(tabId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data when tab is shown
+            if (tabId === 'manage-users') loadUsers();
+            if (tabId === 'manage-databases') loadDatabases();
+            if (tabId === 'privileges') {
+                loadUsersForSelect();
+                loadDatabasesForSelect();
+            }
+        }
+        
+        // Show alert
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 5000);
+        }
+        
+        // API call helper
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) options.body = JSON.stringify(data);
+            
+            const response = await fetch(endpoint, options);
+            return response.json();
+        }
+        
+        // Create User Form
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                database: document.getElementById('dbName').value,
+                username: document.getElementById('dbUser').value,
+                password: document.getElementById('dbPass').value,
+                host: document.getElementById('dbHost').value || 'localhost',
+                create_database: document.getElementById('createDb').checked
+            };
+            
+            const result = await apiCall('/api/create-user', 'POST', data);
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                document.getElementById('createUserForm').reset();
+                document.getElementById('dbHost').value = 'localhost';
+            } else {
+                showAlert(result.error, 'error');
+            }
+        });
+        
+        // Load Users
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = '<tr><td colspan="3"><span class="loading"></span> Loading...</td></tr>';
+            
+            const result = await apiCall('/api/users');
+            
+            if (result.success) {
+                if (result.users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">No users found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = result.users.map(u => `
+                    <tr>
+                        <td>${u.user}</td>
+                        <td>${u.host}</td>
+                        <td>
+                            <button class="btn btn-primary action-btn" onclick="viewGrants('${u.user}', '${u.host}')">📋 Grants</button>
+                            <button class="btn btn-success action-btn" onclick="openPasswordModal('${u.user}', '${u.host}')">🔑 Password</button>
+                            <button class="btn btn-danger action-btn" onclick="deleteUser('${u.user}', '${u.host}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3">Error: ${result.error}</td></tr>`;
+            }
+        }
+        
+        // Load Databases
+        async function loadDatabases() {
+            const tbody = document.getElementById('databasesTable');
+            tbody.innerHTML = '<tr><td colspan="2"><span class="loading"></span> Loading...</td></tr>';
+            
+            const result = await apiCall('/api/databases');
+            
+            if (result.success) {
+                if (result.databases.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2">No databases found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = result.databases.map(db => `
+                    <tr>
+                        <td>${db}</td>
+                        <td>
+                            <button class="btn btn-danger action-btn" onclick="deleteDatabase('${db}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="2">Error: ${result.error}</td></tr>`;
+            }
+        }
+        
+        // Create Database
+        async function createDatabase() {
+            const dbName = document.getElementById('newDbName').value;
+            if (!dbName) {
+                showAlert('Nama database diperlukan', 'error');
+                return;
+            }
+            
+            const result = await apiCall('/api/create-database', 'POST', { database: dbName });
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                document.getElementById('newDbName').value = '';
+                loadDatabases();
+            } else {
+                showAlert(result.error, 'error');
+            }
+        }
+        
+        // Delete Database
+        async function deleteDatabase(dbName) {
+            if (!confirm(`Yakin hapus database "${dbName}"? Semua data akan hilang!`)) return;
+            
+            const result = await apiCall('/api/delete-database', 'POST', { database: dbName });
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                loadDatabases();
+            } else {
+                showAlert(result.error, 'error');
+            }
+        }
+        
+        // Delete User
+        async function deleteUser(username, host) {
+            if (!confirm(`Yakin hapus user "${username}@${host}"?`)) return;
+            
+            const result = await apiCall('/api/delete-user', 'POST', { username, host });
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                loadUsers();
+            } else {
+                showAlert(result.error, 'error');
+            }
+        }
+        
+        // View Grants
+        async function viewGrants(username, host) {
+            const result = await apiCall(`/api/user/${username}/${host}/grants`);
+            
+            const content = document.getElementById('grantsContent');
+            if (result.success) {
+                content.innerHTML = `<h4>${username}@${host}</h4><ul style="margin-top:10px;">${result.grants.map(g => `<li style="margin:5px 0;font-size:12px;word-break:break-all;">${g}</li>`).join('')}</ul>`;
+            } else {
+                content.innerHTML = `<p>Error: ${result.error}</p>`;
+            }
+            
+            document.getElementById('grantsModal').classList.add('active');
+        }
+        
+        function closeGrantsModal() {
+            document.getElementById('grantsModal').classList.remove('active');
+        }
+        
+        // Password Modal
+        function openPasswordModal(username, host) {
+            document.getElementById('modalUser').value = username;
+            document.getElementById('modalHost').value = host;
+            document.getElementById('modalPassword').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+        }
+        
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                username: document.getElementById('modalUser').value,
+                host: document.getElementById('modalHost').value,
+                password: document.getElementById('modalPassword').value
+            };
+            
+            const result = await apiCall('/api/change-password', 'POST', data);
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                closeModal();
+            } else {
+                showAlert(result.error, 'error');
+            }
+        });
+        
+        // Load for Select dropdowns
+        async function loadUsersForSelect() {
+            const result = await apiCall('/api/users');
+            const select = document.getElementById('privUser');
+            select.innerHTML = '<option value="">-- Select User --</option>';
+            
+            if (result.success) {
+                result.users.forEach(u => {
+                    select.innerHTML += `<option value="${u.user}|${u.host}">${u.user}@${u.host}</option>`;
+                });
+            }
+        }
+        
+        async function loadDatabasesForSelect() {
+            const result = await apiCall('/api/databases');
+            const select = document.getElementById('privDb');
+            select.innerHTML = '<option value="">-- Select Database --</option>';
+            
+            if (result.success) {
+                result.databases.forEach(db => {
+                    select.innerHTML += `<option value="${db}">${db}</option>`;
+                });
+            }
+        }
+        
+        // Grant Privileges
+        async function grantPrivileges() {
+            const userVal = document.getElementById('privUser').value;
+            const database = document.getElementById('privDb').value;
+            const privileges = document.getElementById('privType').value;
+            
+            if (!userVal || !database) {
+                showAlert('Pilih user dan database', 'error');
+                return;
+            }
+            
+            const [username, host] = userVal.split('|');
+            
+            const result = await apiCall('/api/grant-privileges', 'POST', {
+                username, host, database, privileges
+            });
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+            } else {
+                showAlert(result.error, 'error');
+            }
+        }
+        
+        // Revoke Privileges
+        async function revokePrivileges() {
+            const userVal = document.getElementById('privUser').value;
+            const database = document.getElementById('privDb').value;
+            const privileges = document.getElementById('privType').value;
+            
+            if (!userVal || !database) {
+                showAlert('Pilih user dan database', 'error');
+                return;
+            }
+            
+            if (!confirm('Yakin revoke privileges?')) return;
+            
+            const [username, host] = userVal.split('|');
+            
+            const result = await apiCall('/api/revoke-privileges', 'POST', {
+                username, host, database, privileges
+            });
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+            } else {
+                showAlert(result.error, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
