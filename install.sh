@@ -44,7 +44,7 @@ After=network.target mysql.service
 Type=simple
 User=root
 WorkingDirectory=${INSTALL_DIR}
-Environment=PATH=${INSTALL_DIR}/venv/bin
+Environment=PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/app.py
 Restart=always
 RestartSec=3
