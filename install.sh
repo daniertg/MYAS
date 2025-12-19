@@ -17,8 +17,8 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Variables
-INSTALL_DIR="/opt/mysql-auto-user"
+# Variables - use current directory
+INSTALL_DIR="$(pwd)"
 SERVICE_NAME="mysql-auto-user"
 PORT=${1:-5000}
 
@@ -26,10 +26,7 @@ echo "[1/6] Installing dependencies..."
 apt-get update -qq
 apt-get install -y python3 python3-pip python3-venv
 
-echo "[2/6] Creating installation directory..."
-mkdir -p $INSTALL_DIR
-cp -r . $INSTALL_DIR/
-cd $INSTALL_DIR
+echo "[2/6] Current directory: $INSTALL_DIR"
 
 echo "[3/6] Setting up Python virtual environment..."
 python3 -m venv venv
@@ -73,6 +70,8 @@ echo ""
 echo "========================================"
 echo "  Installation Complete!"
 echo "========================================"
+echo ""
+echo "Installed at: ${INSTALL_DIR}"
 echo ""
 echo "Access your MySQL Manager at:"
 echo "  http://${SERVER_IP}:${PORT}"
