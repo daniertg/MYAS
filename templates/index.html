@@ -334,41 +334,6 @@
             <button class="tab-btn" onclick="showTab('manage-users')">👥 Manage Users</button>
             <button class="tab-btn" onclick="showTab('manage-databases')">🗄️ Manage Databases</button>
             <button class="tab-btn" onclick="showTab('privileges')">🔐 Privileges</button>
-            <button class="tab-btn" onclick="showTab('settings')">⚙️ Settings</button>
-        </div>
-        
-        <!-- Settings Panel -->
-        <div id="settings" class="panel">
-            <h2>⚙️ MySQL Connection Settings</h2>
-            <div id="connectionStatus" style="padding: 15px; border-radius: 8px; margin-bottom: 20px; background: rgba(255,165,0,0.2); border: 1px solid orange; color: orange;">
-                🔄 Checking connection...
-            </div>
-            <form id="settingsForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>MySQL User</label>
-                        <input type="text" id="mysqlUser" placeholder="root" value="root">
-                    </div>
-                    <div class="form-group">
-                        <label>MySQL Password</label>
-                        <input type="password" id="mysqlPassword" placeholder="(kosongkan jika tidak ada)">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">💾 Save & Test Connection</button>
-                <button type="button" class="btn btn-success" onclick="testConnection()">🔌 Test Connection</button>
-            </form>
-            <div style="margin-top: 20px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px;">
-                <h4 style="color: #00d9ff; margin-bottom: 10px;">ℹ️ Info</h4>
-                <p style="font-size: 13px; color: #aaa; margin-bottom: 5px;">
-                    <strong>Windows:</strong> Pastikan MySQL sudah terinstall dan `mysql` ada di PATH, atau edit path di app.py
-                </p>
-                <p style="font-size: 13px; color: #aaa; margin-bottom: 5px;">
-                    <strong>Linux:</strong> Menggunakan `sudo mysql` (tidak perlu password jika auth_socket)
-                </p>
-                <p style="font-size: 13px; color: #888; margin-top: 10px;">
-                    OS Detected: <span id="osInfo">-</span> | MySQL Command: <span id="mysqlCmdInfo">-</span>
-                </p>
-            </div>
         </div>
         
         <!-- Create User Panel -->
@@ -533,10 +498,6 @@
                 loadUsersForSelect();
                 loadDatabasesForSelect();
             }
-            if (tabId === 'settings') {
-                loadConfig();
-                testConnection();
-            }
         }
         
         // Show alert
@@ -559,60 +520,6 @@
             const response = await fetch(endpoint, options);
             return response.json();
         }
-        
-        // Test Connection
-        async function testConnection() {
-            const statusDiv = document.getElementById('connectionStatus');
-            statusDiv.style.background = 'rgba(255,165,0,0.2)';
-            statusDiv.style.borderColor = 'orange';
-            statusDiv.style.color = 'orange';
-            statusDiv.innerHTML = '🔄 Testing connection...';
-            
-            const result = await apiCall('/api/test-connection');
-            
-            if (result.success) {
-                statusDiv.style.background = 'rgba(0, 191, 99, 0.2)';
-                statusDiv.style.borderColor = '#00bf63';
-                statusDiv.style.color = '#00bf63';
-                statusDiv.innerHTML = '✅ Connected to MySQL successfully!';
-            } else {
-                statusDiv.style.background = 'rgba(233, 69, 96, 0.2)';
-                statusDiv.style.borderColor = '#e94560';
-                statusDiv.style.color = '#e94560';
-                statusDiv.innerHTML = `❌ Connection failed: ${result.error}`;
-            }
-            
-            document.getElementById('osInfo').textContent = result.os || '-';
-            document.getElementById('mysqlCmdInfo').textContent = result.mysql_cmd || '-';
-        }
-        
-        // Load Config
-        async function loadConfig() {
-            const result = await apiCall('/api/config');
-            if (result.user) {
-                document.getElementById('mysqlUser').value = result.user;
-            }
-            document.getElementById('osInfo').textContent = result.os || '-';
-        }
-        
-        // Settings Form
-        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                user: document.getElementById('mysqlUser').value,
-                password: document.getElementById('mysqlPassword').value
-            };
-            
-            const result = await apiCall('/api/config', 'POST', data);
-            
-            if (result.success) {
-                showAlert('Settings saved!', 'success');
-                testConnection();
-            } else {
-                showAlert(result.error, 'error');
-            }
-        });
         
         // Create User Form
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
