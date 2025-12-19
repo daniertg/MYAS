@@ -260,5 +260,28 @@ def change_password():
         return jsonify({'success': True, 'message': f'Password untuk {username}@{host} berhasil diubah'})
     return jsonify({'success': False, 'error': error})
 
+@app.route('/api/update-host', methods=['POST'])
+def update_host():
+    """Update user host by renaming the user"""
+    data = request.json
+    username = data.get('username', '').strip()
+    old_host = data.get('old_host', '').strip()
+    new_host = data.get('new_host', '').strip()
+    
+    if not username or not old_host or not new_host:
+        return jsonify({'success': False, 'error': 'Username, old host, dan new host diperlukan'})
+    
+    if new_host == '' or new_host == 'localhost':
+        new_host = 'localhost'
+    elif new_host == '0' or new_host == '%':
+        new_host = '%'
+    
+    sql = f"RENAME USER '{username}'@'{old_host}' TO '{username}'@'{new_host}'; FLUSH PRIVILEGES;"
+    success, output, error = run_mysql_command(sql)
+    
+    if success:
+        return jsonify({'success': True, 'message': f'Host untuk {username} berhasil diubah dari {old_host} ke {new_host}'})
+    return jsonify({'success': False, 'error': error})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

@@ -339,6 +339,7 @@
         <!-- Create User Panel -->
         <div id="create-user" class="panel active">
             <h2>➕ Create User & Database</h2>
+            <p style="color: #888; margin-bottom: 15px; font-size: 13px;">Buat database baru beserta user yang sudah diberi akses penuh ke database tersebut.</p>
             <form id="createUserForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -362,10 +363,6 @@
                         <p class="password-hint">Min 8 karakter, huruf besar, huruf kecil, angka, karakter spesial</p>
                     </div>
                 </div>
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="createDb" checked>
-                    <label for="createDb">Buat database juga</label>
-                </div>
                 <button type="submit" class="btn btn-primary">🚀 Create User & Database</button>
             </form>
         </div>
@@ -373,6 +370,29 @@
         <!-- Manage Users Panel -->
         <div id="manage-users" class="panel">
             <h2>👥 Manage Users</h2>
+            
+            <!-- Create User Only Form -->
+            <div style="background: rgba(0,217,255,0.1); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="color: #00d9ff; margin-bottom: 15px;">➕ Create User Only (tanpa database)</h4>
+                <form id="createUserOnlyForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="newUsername" placeholder="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Host</label>
+                            <input type="text" id="newUserHost" placeholder="localhost" value="localhost">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="newUserPass" placeholder="Password" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">➕ Create User</button>
+                </form>
+            </div>
+            
             <button class="btn btn-primary" onclick="loadUsers()">🔄 Refresh Users</button>
             <div class="table-container">
                 <table>
@@ -482,6 +502,34 @@
             <div id="grantsContent"></div>
         </div>
     </div>
+    
+    <!-- Update Host Modal -->
+    <div id="hostModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🌐 Update Host</h3>
+                <button class="modal-close" onclick="closeHostModal()">&times;</button>
+            </div>
+            <form id="updateHostForm">
+                <input type="hidden" id="hostModalUser">
+                <input type="hidden" id="hostModalOldHost">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="hostModalUsername" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Current Host</label>
+                    <input type="text" id="hostModalCurrentHost" disabled>
+                </div>
+                <div class="form-group">
+                    <label>New Host</label>
+                    <input type="text" id="hostModalNewHost" placeholder="localhost atau % atau IP" required>
+                    <p class="host-info">localhost = local | % = semua host | IP = specific host</p>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Update Host</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         // Tab navigation
@@ -521,7 +569,7 @@
             return response.json();
         }
         
-        // Create User Form
+        // Create User & Database Form (always creates both)
         document.getElementById('createUserForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -530,7 +578,7 @@
                 username: document.getElementById('dbUser').value,
                 password: document.getElementById('dbPass').value,
                 host: document.getElementById('dbHost').value || 'localhost',
-                create_database: document.getElementById('createDb').checked
+                create_database: true  // Always create database
             };
             
             const result = await apiCall('/api/create-user', 'POST', data);
@@ -539,6 +587,30 @@
                 showAlert(result.message, 'success');
                 document.getElementById('createUserForm').reset();
                 document.getElementById('dbHost').value = 'localhost';
+            } else {
+                showAlert(result.error, 'error');
+            }
+        });
+        
+        // Create User Only Form (without database)
+        document.getElementById('createUserOnlyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                database: '',
+                username: document.getElementById('newUsername').value,
+                password: document.getElementById('newUserPass').value,
+                host: document.getElementById('newUserHost').value || 'localhost',
+                create_database: false
+            };
+            
+            const result = await apiCall('/api/create-user', 'POST', data);
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                document.getElementById('createUserOnlyForm').reset();
+                document.getElementById('newUserHost').value = 'localhost';
+                loadUsers();
             } else {
                 showAlert(result.error, 'error');
             }
@@ -564,6 +636,7 @@
                         <td>
                             <button class="btn btn-primary action-btn" onclick="viewGrants('${u.user}', '${u.host}')">📋 Grants</button>
                             <button class="btn btn-success action-btn" onclick="openPasswordModal('${u.user}', '${u.host}')">🔑 Password</button>
+                            <button class="btn btn-primary action-btn" onclick="openHostModal('${u.user}', '${u.host}')">🌐 Host</button>
                             <button class="btn btn-danger action-btn" onclick="deleteUser('${u.user}', '${u.host}')">🗑️ Delete</button>
                         </td>
                     </tr>
@@ -690,6 +763,40 @@
             if (result.success) {
                 showAlert(result.message, 'success');
                 closeModal();
+            } else {
+                showAlert(result.error, 'error');
+            }
+        });
+        
+        // Host Modal
+        function openHostModal(username, host) {
+            document.getElementById('hostModalUser').value = username;
+            document.getElementById('hostModalOldHost').value = host;
+            document.getElementById('hostModalUsername').value = username;
+            document.getElementById('hostModalCurrentHost').value = host;
+            document.getElementById('hostModalNewHost').value = '';
+            document.getElementById('hostModal').classList.add('active');
+        }
+        
+        function closeHostModal() {
+            document.getElementById('hostModal').classList.remove('active');
+        }
+        
+        document.getElementById('updateHostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                username: document.getElementById('hostModalUser').value,
+                old_host: document.getElementById('hostModalOldHost').value,
+                new_host: document.getElementById('hostModalNewHost').value
+            };
+            
+            const result = await apiCall('/api/update-host', 'POST', data);
+            
+            if (result.success) {
+                showAlert(result.message, 'success');
+                closeHostModal();
+                loadUsers();
             } else {
                 showAlert(result.error, 'error');
             }
