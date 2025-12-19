@@ -8,16 +8,68 @@ from flask import Flask, render_template, request, jsonify, flash, redirect, url
 import subprocess
 import re
 import os
+import platform
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
+# ===== Configuration =====
+# Set MySQL credentials here for Windows or non-sudo environments
+MYSQL_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',  # Set your MySQL root password here if needed
+    'port': 3306
+}
+
+def get_mysql_command():
+    """Get appropriate MySQL command based on OS"""
+    system = platform.system()
+    
+    if system == 'Windows':
+        # On Windows, try to find mysql in PATH or common locations
+        mysql_paths = [
+            'mysql',
+            r'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe',
+            r'C:\Program Files\MySQL\MySQL Server 5.7\bin\mysql.exe',
+            r'C:\xampp\mysql\bin\mysql.exe',
+            r'C:\wamp64\bin\mysql\mysql8.0.31\bin\mysql.exe',
+            r'C:\laragon\bin\mysql\mysql-8.0.30-winx64\bin\mysql.exe',
+        ]
+        
+        for path in mysql_paths:
+            try:
+                result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    return path
+            except:
+                continue
+        return 'mysql'  # fallback to PATH
+    else:
+        return 'mysql'
+
+MYSQL_CMD = get_mysql_command()
+
 # ===== MySQL Command Executor =====
 def run_mysql_command(sql):
-    """Execute MySQL command using sudo mysql"""
+    """Execute MySQL command"""
     try:
+        system = platform.system()
+        
+        if system == 'Windows':
+            # Windows: use mysql directly with credentials
+            cmd = [MYSQL_CMD]
+            if MYSQL_CONFIG['user']:
+                cmd.extend(['-u', MYSQL_CONFIG['user']])
+            if MYSQL_CONFIG['password']:
+                cmd.extend([f"-p{MYSQL_CONFIG['password']}"])
+            cmd.extend(['-e', sql])
+        else:
+            # Linux: use sudo mysql
+            cmd = ['sudo', 'mysql', '-e', sql]
+        
         result = subprocess.run(
-            ['sudo', 'mysql', '-e', sql],
+            cmd,
             capture_output=True,
             text=True,
             timeout=30
@@ -25,19 +77,35 @@ def run_mysql_command(sql):
         return result.returncode == 0, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return False, '', 'Command timeout'
+    except FileNotFoundError as e:
+        return False, '', f'MySQL not found. Please install MySQL or add it to PATH. Error: {str(e)}'
     except Exception as e:
         return False, '', str(e)
 
 def run_mysql_query(sql):
     """Execute MySQL query and return results"""
     try:
+        system = platform.system()
+        
+        if system == 'Windows':
+            cmd = [MYSQL_CMD]
+            if MYSQL_CONFIG['user']:
+                cmd.extend(['-u', MYSQL_CONFIG['user']])
+            if MYSQL_CONFIG['password']:
+                cmd.extend([f"-p{MYSQL_CONFIG['password']}"])
+            cmd.extend(['-N', '-e', sql])
+        else:
+            cmd = ['sudo', 'mysql', '-N', '-e', sql]
+        
         result = subprocess.run(
-            ['sudo', 'mysql', '-N', '-e', sql],
+            cmd,
             capture_output=True,
             text=True,
             timeout=30
         )
         return result.returncode == 0, result.stdout.strip(), result.stderr
+    except FileNotFoundError as e:
+        return False, '', f'MySQL not found. Please install MySQL or add it to PATH.'
     except Exception as e:
         return False, '', str(e)
 
@@ -60,6 +128,45 @@ def validate_password(password):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api/test-connection', methods=['GET'])
+def test_connection():
+    """Test MySQL connection"""
+    success, output, error = run_mysql_query("SELECT 1;")
+    if success:
+        return jsonify({
+            'success': True, 
+            'message': 'MySQL connection successful',
+            'os': platform.system(),
+            'mysql_cmd': MYSQL_CMD
+        })
+    return jsonify({
+        'success': False, 
+        'error': error,
+        'os': platform.system(),
+        'mysql_cmd': MYSQL_CMD
+    })
+
+@app.route('/api/config', methods=['GET', 'POST'])
+def config():
+    """Get or update MySQL config"""
+    global MYSQL_CONFIG
+    
+    if request.method == 'POST':
+        data = request.json
+        if 'user' in data:
+            MYSQL_CONFIG['user'] = data['user']
+        if 'password' in data:
+            MYSQL_CONFIG['password'] = data['password']
+        if 'host' in data:
+            MYSQL_CONFIG['host'] = data['host']
+        return jsonify({'success': True, 'message': 'Config updated'})
+    
+    return jsonify({
+        'user': MYSQL_CONFIG['user'],
+        'host': MYSQL_CONFIG['host'],
+        'os': platform.system()
+    })
 
 @app.route('/api/databases', methods=['GET'])
 def list_databases():
